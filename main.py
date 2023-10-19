@@ -12,7 +12,6 @@ header = {'User-Agent': ua}
 base_url = "https://festagent.com"
 data = []
 
-# Настройка логирования
 logging.basicConfig(filename='scraping_log.txt', level=logging.INFO)
 
 
