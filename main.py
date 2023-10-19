@@ -57,34 +57,38 @@ def extract_festival_data(url):
 
     return [title, country, email, official_website]
 
+def main():
+    for page_number in range(1, 58):
+        url = f'https://festagent.com/ru/festivals?page={page_number}'
+        response = send_request(url)
+        if response is None:
+            continue
 
-for page_number in range(1, 58):
-    url = f'https://festagent.com/ru/festivals?page={page_number}'
-    response = send_request(url)
-    if response is None:
-        continue
+        soup = BeautifulSoup(response.text, 'lxml')
+        links = soup.find_all('div', class_='title-link')
 
-    soup = BeautifulSoup(response.text, 'lxml')
-    links = soup.find_all('div', class_='title-link')
+        for link in links:
+            anchor = link.find('a')
+            if anchor:
+                url = anchor['href']
+                full_url = base_url + url
 
-    for link in links:
-        anchor = link.find('a')
-        if anchor:
-            url = anchor['href']
-            full_url = base_url + url
+                try:
+                    festival_data = extract_festival_data(full_url)
+                    if festival_data:
+                        data.append(festival_data)
+                        logging.info(f"Данные для {festival_data[0]} получены успешно")
+                except Exception as e:
+                    logging.error(f"Ошибка при извлечении данных для {full_url}: {e}")
+        time.sleep(10)
 
-            try:
-                festival_data = extract_festival_data(full_url)
-                if festival_data:
-                    data.append(festival_data)
-                    logging.info(f"Данные для {festival_data[0]} получены успешно")
-            except Exception as e:
-                logging.error(f"Ошибка при извлечении данных для {full_url}: {e}")
-    time.sleep(10)
+    df = pd.DataFrame(data, columns=["Название", "Страна", "Email", "Официальный сайт"])
 
-df = pd.DataFrame(data, columns=["Название", "Страна", "Email", "Официальный сайт"])
+    output_excel_file = "festivals_data.xlsx"
+    df.to_excel(output_excel_file, index=False, engine='openpyxl')
 
-output_excel_file = "festivals_data.xlsx"
-df.to_excel(output_excel_file, index=False, engine='openpyxl')
+    print("Данные записаны в Excel-таблицу:", output_excel_file)
 
-print("Данные записаны в Excel-таблицу:", output_excel_file)
+
+if __name__ == '__main__':
+    main()
